@@ -6,8 +6,10 @@ from torch import nn
 from torch.cuda.amp import GradScaler
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
+from .config import Config
 
-MODEL_SAVE_DIR = "models"
+
+config = Config()
 
 
 def train_step(
@@ -93,7 +95,7 @@ def train(
 ) -> Dict[str, List]:
     """Trains the model over the given epochs."""
 
-    os.makedirs(MODEL_SAVE_DIR, exist_ok=True)
+    os.makedirs(config.model_save_dir, exist_ok=True)
     result = {"train_loss": [], "val_loss": [], "val_acc": [], "lr": []}
 
     scaler = GradScaler(enabled=use_amp, device_type=device)
@@ -112,6 +114,6 @@ def train(
         result["val_acc"].append(val_acc)
 
         scheduler.step()
-        torch.save(model.state_dict(), f"{MODEL_SAVE_DIR}/model-{epoch}.pth")
+        torch.save(model.state_dict(), f"{config.model_save_dir}/model-{epoch}.pth")
 
     return result
