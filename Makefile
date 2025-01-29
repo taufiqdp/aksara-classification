@@ -4,3 +4,6 @@ run:
 format:
 	python3 -m black .
 
+restart:
+	docker compose down && docker compose up -d
+
