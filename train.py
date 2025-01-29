@@ -1,17 +1,12 @@
 import torch
 import os
 from torch import nn
-from huggingface_hub import login
-from dotenv import load_dotenv
 from model import load_model
 from config import Config
 from utils import create_dataloaders, get_transforms
 from engine import train
 
 
-load_dotenv()
-HF_TOKEN = os.getenv("HF_TOKEN")
-login(HF_TOKEN)
 config = Config()
 
 train_dataloader, val_dataloader, class_names = create_dataloaders(
