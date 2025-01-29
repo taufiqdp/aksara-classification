@@ -3,10 +3,10 @@ from typing import Dict, List, Tuple
 
 import torch
 from torch import nn
-from torch.cuda.amp import GradScaler
+from torch.amp import GradScaler
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
-from .config import Config
+from config import Config
 
 
 config = Config()
@@ -98,7 +98,7 @@ def train(
     os.makedirs(config.model_save_dir, exist_ok=True)
     result = {"train_loss": [], "val_loss": [], "val_acc": [], "lr": []}
 
-    scaler = GradScaler(enabled=use_amp, device_type=device)
+    scaler = GradScaler(device)
 
     for epoch in range(epochs):
         print(f"Epoch: {epoch+1} | lr: {scheduler.get_last_lr()}")
