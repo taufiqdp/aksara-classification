@@ -3,10 +3,10 @@ import os
 from torch import nn
 from huggingface_hub import login
 from dotenv import load_dotenv
-from .model import load_model
-from .config import Config
-from .utils import create_dataloaders, get_transforms
-from .engine import train
+from model import load_model
+from config import Config
+from utils import create_dataloaders, get_transforms
+from engine import train
 
 
 load_dotenv()
