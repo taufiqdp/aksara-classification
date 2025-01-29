@@ -19,3 +19,6 @@ class Config:
     # Device settings
     device: str = "cuda"
     use_amp: bool = True
+
+    # Other settings
+    model_save_dir: str = "models"
