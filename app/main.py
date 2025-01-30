@@ -30,9 +30,12 @@ async def root():
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
-    # Read and process the image
     contents = await file.read()
+
     image = Image.open(io.BytesIO(contents))
+    if image.mode == 'RGBA':
+        image = image.convert('RGB')
+
     image_tensor = transforms(image).unsqueeze(dim=0)
 
     with torch.inference_mode():
