@@ -1,7 +1,9 @@
 import io
 import torch
-
-from fastapi import FastAPI, UploadFile, File
+import time
+import torch.nn.functional as F
+from typing import List
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 from app.model import load_model
@@ -33,17 +35,58 @@ async def predict(file: UploadFile = File(...)):
     contents = await file.read()
 
     image = Image.open(io.BytesIO(contents))
-    if image.mode == 'RGBA':
-        image = image.convert('RGB')
+    if image.mode == "RGBA":
+        image = image.convert("RGB")
 
     image_tensor = transforms(image).unsqueeze(dim=0)
 
     with torch.inference_mode():
         logits = model(image_tensor)
 
-    pred = labels[logits.argmax(dim=-1)]
+    probs = F.softmax(logits, dim=-1)
 
-    return {"prediction": pred}
+    pred_idx = logits.argmax(dim=-1)
+    pred = labels[pred_idx]
+    prob = probs[0][pred_idx].item()
+
+    return {"prediction": pred, "probability": prob}
+
+
+@app.post("/batch-predict")
+async def predict(files: List[UploadFile] = File(...)):
+    start_time = time.time()
+
+    predictions = []
+    image_tensors = []
+
+    for file in files:
+        try:
+            contents = await file.read()
+            image = Image.open(io.BytesIO(contents))
+            if image.mode == "RGBA":
+                image = image.convert("RGB")
+            image_tensor = transforms(image).unsqueeze(dim=0)
+            image_tensors.append(image_tensor)
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Error processing file {file.filename}: {e}"
+            )
+
+    if image_tensors:
+        batch_tensor = torch.cat(image_tensors, dim=0)
+        with torch.inference_mode():
+            logits = model(batch_tensor)
+
+        predicted_labels = [labels[idx] for idx in logits.argmax(dim=-1).tolist()]
+        predictions.extend(predicted_labels)
+
+    prediction_time = time.time() - start_time
+
+    return {
+        "predictions": predictions,
+        "prediction_time_seconds": round(prediction_time, 3),
+    }
 
 
 if __name__ == "__main__":
