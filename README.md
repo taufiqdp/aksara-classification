@@ -6,6 +6,7 @@ This project is a machine learning application for classifying Aksara characters
 
 - Docker
 - Docker Compose
+- Python 3.8+ (for local development)
 
 ## Getting Started
 
@@ -16,49 +17,85 @@ git clone https://github.com/yourusername/aksara-classification.git
 cd aksara-classification
 ```
 
-### Build and Run the Application
+### Development Setup
 
-1. **Build the Docker images and start the containers:**
+1. **Install development dependencies:**
 
    ```sh
-   docker compose up --build -d
+   pip install -r requirements-dev.txt
    ```
 
-2. **Access the application:**
+2. **Run the application locally:**
 
-   The application will be available at [http://localhost:8000](http://localhost:8000).
+   ```sh
+   make dev
+   ```
 
-### Stopping the Application
+   The development server will be available at [http://localhost:8000](http://localhost:8000) with hot-reload enabled.
 
-To stop the application, run:
+### Docker Setup
 
-```sh
-docker compose down
-```
+1. **Development environment:**
 
-### Rebuilding the Application
+   ```sh
+   make dev-docker
+   ```
 
-If you make changes to the code and need to rebuild the application, run:
+2. **Production environment:**
 
-```sh
-docker compose down && docker compose up --build -d
-```
+   ```sh
+   make prod
+   ```
 
-## Development
+The application will be available at [http://localhost:8000](http://localhost:8000).
 
-For development purposes, you can use the following commands defined in the [`Makefile`]:
+### Docker Commands
 
-- **Start the application in development mode:**
-
-  ```sh
-  make dev
-  ```
-
-- **Format the code:**
+- **Stop containers:**
 
   ```sh
-  make format
+  make dev-stop    # Development
+  make prod-stop   # Production
   ```
+
+- **Rebuild containers:**
+  ```sh
+  make dev-rebuild    # Development
+  make prod-rebuild   # Production
+  ```
+
+## Development Tools
+
+This project includes several tools to maintain code quality:
+
+- **Format code:**
+
+  ```sh
+  make format    # Runs black and isort
+  ```
+
+- **Lint code:**
+
+  ```sh
+  make lint      # Runs flake8 and mypy
+  ```
+
+- **Run tests:**
+
+  ```sh
+  make test      # Runs pytest
+  ```
+
+- **Clean project:**
+  ```sh
+  make clean     # Removes cache and build artifacts
+  ```
+
+For a complete list of available commands:
+
+```sh
+make help
+```
 
 ## License
 
