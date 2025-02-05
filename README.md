@@ -13,7 +13,7 @@ This project is a machine learning application for classifying Aksara characters
 ### Clone the Repository
 
 ```sh
-git clone https://github.com/yourusername/aksara-classification.git
+git clone https://github.com/taufiqdp/aksara-classification.git
 cd aksara-classification
 ```
 
@@ -99,4 +99,4 @@ make help
 
 ## License
 
-This project is licensed under the MIT License - see the [`LICENSE`]
+This project is licensed under the MIT License - see the [`LICENSE`](https://github.com/taufiqdp/aksara-classification/blob/main/LICENSE)
