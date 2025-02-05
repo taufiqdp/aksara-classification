@@ -27,36 +27,41 @@ model.eval()
 
 @app.get("/")
 async def root():
-    return {"message": "Arutala....."}
+    return {"message": "last updated: 2025-02-05", "status": "running"}
 
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
-    contents = await file.read()
+    try:
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
+        if image.mode == "RGBA":
+            image = image.convert("RGB")
 
-    image = Image.open(io.BytesIO(contents))
-    if image.mode == "RGBA":
-        image = image.convert("RGB")
+        image_tensor = transforms(image).unsqueeze(dim=0)
 
-    image_tensor = transforms(image).unsqueeze(dim=0)
+        with torch.inference_mode():
+            logits = model(image_tensor)
 
-    with torch.inference_mode():
-        logits = model(image_tensor)
+        probs = F.softmax(logits, dim=-1)
 
-    probs = F.softmax(logits, dim=-1)
+        pred_idx = logits.argmax(dim=-1)
+        pred = labels[pred_idx]
+        prob = probs[0][pred_idx].item()
 
-    pred_idx = logits.argmax(dim=-1)
-    pred = labels[pred_idx]
-    prob = probs[0][pred_idx].item()
+        return {"prediction": pred, "probability": prob}
 
-    return {"prediction": pred, "probability": prob}
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error processing file {file.filename}: {e}"
+        )
 
 
 @app.post("/batch-predict")
 async def predict(files: List[UploadFile] = File(...)):
-    start_time = time.time()
 
     predictions = []
+    probabilities = []
     image_tensors = []
 
     for file in files:
@@ -80,12 +85,12 @@ async def predict(files: List[UploadFile] = File(...)):
 
         predicted_labels = [labels[idx] for idx in logits.argmax(dim=-1).tolist()]
         predictions.extend(predicted_labels)
+        probabilities = F.softmax(logits, dim=-1).tolist()
 
-    prediction_time = time.time() - start_time
 
     return {
         "predictions": predictions,
-        "prediction_time_seconds": round(prediction_time, 3),
+        "probabilities": probabilities,
     }
 
 
