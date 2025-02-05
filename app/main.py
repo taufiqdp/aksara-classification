@@ -83,10 +83,12 @@ async def predict(files: List[UploadFile] = File(...)):
         with torch.inference_mode():
             logits = model(batch_tensor)
 
-        predicted_labels = [labels[idx] for idx in logits.argmax(dim=-1).tolist()]
+        predicted_indices = logits.argmax(dim=-1).tolist()
+        predicted_labels = [labels[idx] for idx in predicted_indices]
         predictions.extend(predicted_labels)
-        probabilities = F.softmax(logits, dim=-1).tolist()
-
+        
+        top_probs, _ = torch.topk(F.softmax(logits, dim=-1), k=1)
+        probabilities = top_probs.squeeze().tolist()
 
     return {
         "predictions": predictions,
