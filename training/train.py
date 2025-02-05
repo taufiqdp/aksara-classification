@@ -1,11 +1,11 @@
-import torch
 import os
-from torch import nn
-from model import load_model
-from config import Config
-from utils import create_dataloaders, get_transforms
-from engine import train
 
+import torch
+from config import Config
+from engine import train
+from model import load_model
+from torch import nn
+from utils import create_dataloaders, get_transforms
 
 config = Config()
 

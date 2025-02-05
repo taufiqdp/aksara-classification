@@ -1,5 +1,6 @@
-import timm
 from typing import Tuple
+
+import timm
 import torch.nn as nn
 from torchvision import transforms
 

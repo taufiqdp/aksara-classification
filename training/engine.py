@@ -2,12 +2,11 @@ import os
 from typing import Dict, List, Tuple
 
 import torch
+from config import Config
 from torch import nn
 from torch.amp import GradScaler
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
-from config import Config
-
 
 config = Config()
 

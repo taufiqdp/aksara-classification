@@ -1,13 +1,14 @@
 import io
-import torch
 import time
-import torch.nn.functional as F
 from typing import List
-from fastapi import FastAPI, UploadFile, File, HTTPException
+
+import torch
+import torch.nn.functional as F
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
-from app.model import load_model
 
+from app.model import load_model
 
 app = FastAPI()
 
@@ -86,7 +87,7 @@ async def predict(files: List[UploadFile] = File(...)):
         predicted_indices = logits.argmax(dim=-1).tolist()
         predicted_labels = [labels[idx] for idx in predicted_indices]
         predictions.extend(predicted_labels)
-        
+
         top_probs, _ = torch.topk(F.softmax(logits, dim=-1), k=1)
         probabilities = top_probs.squeeze().tolist()
 
