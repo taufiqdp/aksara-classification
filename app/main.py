@@ -28,7 +28,7 @@ model.eval()
 
 @app.get("/")
 async def root():
-    return {"message": "last updated: 2025-02-05", "status": "running"}
+    return {"last_updated": "2025-02-05", "status": "running"}
 
 
 @app.post("/predict")
