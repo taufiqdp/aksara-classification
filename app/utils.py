@@ -34,7 +34,7 @@ def upload_to_s3(
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         unique_id = str(uuid.uuid4())[:8]
 
-        s3_key = f"{prediction}/{timestamp}_{unique_id}_{filename}"
+        s3_key = f"sunda/{prediction}/{timestamp}_{unique_id}_{filename}"
 
         s3_client.put_object(
             Bucket=S3_BUCKET_NAME,
