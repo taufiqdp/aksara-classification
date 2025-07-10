@@ -1,14 +1,13 @@
 import io
-import time
-from typing import List
 
 import torch
 import torch.nn.functional as F
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 
 from app.model import load_model
+from app.utils import upload_to_s3
 
 app = FastAPI()
 
@@ -20,7 +19,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-model, transforms = load_model("hf_hub:taufiqdp/convnext_tiny-arutala")
+model, transforms = load_model("hf_hub:taufiqdp/arutala-sunda-v1")
 labels = model.default_cfg["label_names"]
 
 model.eval()
@@ -32,7 +31,7 @@ async def root():
 
 
 @app.post("/predict")
-async def predict(file: UploadFile = File(...)):
+async def predict(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     try:
         contents = await file.read()
         image = Image.open(io.BytesIO(contents))
@@ -47,8 +46,16 @@ async def predict(file: UploadFile = File(...)):
         probs = F.softmax(logits, dim=-1)
 
         pred_idx = logits.argmax(dim=-1)
-        pred = labels[pred_idx]
+        pred = str(labels[pred_idx])
         prob = probs[0][pred_idx].item()
+
+        background_tasks.add_task(
+            upload_to_s3,
+            image_data=contents,
+            filename=file.filename,
+            prediction=pred,
+            probability=prob,
+        )
 
         return {"prediction": pred, "probability": prob}
 
@@ -56,45 +63,6 @@ async def predict(file: UploadFile = File(...)):
         raise HTTPException(
             status_code=400, detail=f"Error processing file {file.filename}: {e}"
         )
-
-
-@app.post("/batch-predict")
-async def predict(files: List[UploadFile] = File(...)):
-
-    predictions = []
-    probabilities = []
-    image_tensors = []
-
-    for file in files:
-        try:
-            contents = await file.read()
-            image = Image.open(io.BytesIO(contents))
-            if image.mode == "RGBA":
-                image = image.convert("RGB")
-            image_tensor = transforms(image).unsqueeze(dim=0)
-            image_tensors.append(image_tensor)
-
-        except Exception as e:
-            raise HTTPException(
-                status_code=400, detail=f"Error processing file {file.filename}: {e}"
-            )
-
-    if image_tensors:
-        batch_tensor = torch.cat(image_tensors, dim=0)
-        with torch.inference_mode():
-            logits = model(batch_tensor)
-
-        predicted_indices = logits.argmax(dim=-1).tolist()
-        predicted_labels = [labels[idx] for idx in predicted_indices]
-        predictions.extend(predicted_labels)
-
-        top_probs, _ = torch.topk(F.softmax(logits, dim=-1), k=1)
-        probabilities = top_probs.squeeze().tolist()
-
-    return {
-        "predictions": predictions,
-        "probabilities": probabilities,
-    }
 
 
 if __name__ == "__main__":
